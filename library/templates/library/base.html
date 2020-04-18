@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+</head>
+<body>
+<div id="content">
+    {% block header %}<h1>图书管理系统</h1>{% endblock %}
+    <hr>
+    {% block content %}{% endblock %}
+    <hr>
+    <footer>
+        <small>Author: ZZy</small>
+    </footer>
+</div>
+</body>
+</html>

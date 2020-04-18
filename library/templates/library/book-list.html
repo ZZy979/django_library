@@ -1,0 +1,17 @@
+{% extends "library/base.html" %}
+
+{% block title %}图书查询结果{% endblock %}
+
+{% block content %}
+    <h3>图书查询结果</h3>
+    {% if book_list %}
+        <ul>
+            {% for book in book_list %}
+                <li><a href="{% url 'library:book-detail' book.id %}">{{ book.title }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>没有符合条件的图书</p>
+    {% endif %}
+    <a href="{% url 'library:index' %}">返回首页</a>
+{% endblock %}

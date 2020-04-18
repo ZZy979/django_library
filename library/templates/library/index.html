@@ -1,0 +1,23 @@
+{% extends "library/base.html" %}
+
+{% block title %}图书管理系统{% endblock %}
+
+{% block header %}<h1>欢迎来到图书管理系统！</h1>{% endblock %}
+
+{% block content %}
+    <h3>查询作者</h3>
+    <form action="{% url 'library:query-author' %}" method="get">
+        <label for="name-input">姓名</label>
+        <input id="name-input" type="text" name="name" required>
+        <input type="submit" value="确定">
+    </form>
+    <a href="{% url 'library:query-author' %}">查询全部作者</a>
+    <hr>
+    <h3>查询图书</h3>
+    <form action="{% url 'library:query-book' %}" method="get">
+        <label for="title-input">书名</label>
+        <input id="title-input" type="text" name="title" required>
+        <input type="submit" value="确定">
+    </form>
+    <a href="{% url 'library:query-book' %}">查询全部图书</a>
+{% endblock %}

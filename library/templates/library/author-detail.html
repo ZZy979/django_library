@@ -1,0 +1,19 @@
+{% extends "library/base.html" %}
+
+{% block title %}作者详细信息{% endblock %}
+
+{% block content %}
+    <h3>作者详细信息</h3>
+    <table border="1">
+    <tr>
+        <td>姓名</td>
+        <td>{{ author.name }}</td>
+    </tr>
+    <tr>
+        <td>国家</td>
+        <td>{{ author.country }}</td>
+    </tr>
+    </table>
+    <a href="{% url 'library:books-of-author' %}?aid={{ author.id }}">查询该作者所著的图书</a>
+    <a href="{% url 'library:index' %}">返回首页</a>
+{% endblock %}
