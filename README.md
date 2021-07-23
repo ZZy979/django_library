@@ -7,8 +7,9 @@
 * 点击图书标题显示图书详细信息
 * 查询某个作者所著的全部图书
 
-## 依赖软件
-* Python 3.7
-* Django 3.0
-* MySQL 8.0
-* mysqlclient
+## 加载初始数据
+```shell
+python manage.py makemigrations
+python manage.py migrate
+python manage.py loaddata data.json
+```
