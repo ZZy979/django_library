@@ -1,4 +1,26 @@
+from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+
+class User(AbstractUser):
+
+    def is_reader(self):
+        return self.groups.filter(name=settings.READER_GROUP).exists()
+
+    def is_librarian(self):
+        return self.groups.filter(name=settings.LIBRARIAN_GROUP).exists()
+
+    def can_login(self):
+        return self.is_reader() or self.is_librarian()
+
+
+class Reader(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='+')
+
+
+class Librarian(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='+')
 
 
 class Author(models.Model):

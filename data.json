@@ -1,5 +1,21 @@
 [
 {
+  "model": "auth.group",
+  "pk": 1,
+  "fields": {
+    "name": "Reader",
+    "permissions": []
+  }
+},
+{
+  "model": "auth.group",
+  "pk": 2,
+  "fields": {
+    "name": "Librarian",
+    "permissions": []
+  }
+},
+{
   "model": "library.book",
   "pk": 1,
   "fields": {

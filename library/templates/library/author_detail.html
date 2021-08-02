@@ -1,10 +1,10 @@
-{% extends "library/base.html" %}
+{% extends 'library/base.html' %}
 
 {% block title %}作者详细信息{% endblock %}
 
 {% block content %}
-    <h3>作者详细信息</h3>
-    <table border="1">
+    <h3 class="text-center my-3">作者详细信息</h3>
+    <table class="table">
     <tr>
         <td>姓名</td>
         <td>{{ author.name }}</td>
@@ -14,6 +14,5 @@
         <td>{{ author.country }}</td>
     </tr>
     </table>
-    <a href="{% url 'library:books-of-author' %}?aid={{ author.id }}">查询该作者所著的图书</a>
-    <a href="{% url 'library:index' %}">返回首页</a>
+    <p><a href="{% url 'library:books-of-author' %}?aid={{ author.id }}">查询该作者所著的图书</a></p>
 {% endblock %}

@@ -13,23 +13,13 @@ class AuthorListViewTests(TestCase):
 
     def test_query_author(self):
         """根据姓名查询作者。"""
-        response = self.client.get(reverse('library:query-author'), {'name': 'Alice'})
+        response = self.client.get(reverse('library:search-author'), {'name': 'Alice'})
         self.assertEqual(response.status_code, 200)
         self.assertQuerysetEqual(response.context['author_list'], ['<Author: Alice>'])
 
-    def test_query_all_authors(self):
-        """查询全部作者。"""
-        response = self.client.get(reverse('library:query-author'))
-        self.assertEqual(response.status_code, 200)
-        self.assertQuerysetEqual(
-            response.context['author_list'],
-            ['<Author: Alice>', '<Author: Bob>'],
-            ordered=False
-        )
-
     def test_not_found(self):
         """未查询到作者。"""
-        response = self.client.get(reverse('library:query-author'), {'name': 'Cindy'})
+        response = self.client.get(reverse('library:search-author'), {'name': 'Cindy'})
         self.assertContains(response, '没有符合条件的作者')
         self.assertQuerysetEqual(response.context['author_list'], [])
 

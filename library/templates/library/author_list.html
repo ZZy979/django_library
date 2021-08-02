@@ -1,17 +1,20 @@
-{% extends "library/base.html" %}
+{% extends 'library/base.html' %}
 
-{% block title %}作者查询结果{% endblock %}
+{% block title %}作者检索结果{% endblock %}
 
 {% block content %}
-    <h3>作者查询结果</h3>
+    <h3 class="text-center my-3">作者检索结果</h3>
+    <div class="mx-auto" style="max-width: 40rem">
     {% if author_list %}
-        <ul>
-            {% for author in author_list %}
-                <li><a href="{% url 'library:author-detail' author.id %}">{{ author.name }}</a></li>
-            {% endfor %}
-        </ul>
+        {% for author in author_list %}
+            <div class="card my-2">
+                <div class="card-body">
+                    <p><a href="{% url 'library:author-detail' author.id %}">{{ author.name }}</a></p>
+                </div>
+            </div>
+        {% endfor %}
     {% else %}
         <p>没有符合条件的作者</p>
     {% endif %}
-    <a href="{% url 'library:index' %}">返回首页</a>
+    </div>
 {% endblock %}

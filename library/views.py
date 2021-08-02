@@ -1,40 +1,96 @@
-from django.shortcuts import render, get_object_or_404
-from django.views import generic
+import re
 
-from .models import Author, Book
+from django.conf import settings
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import Group
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import ListView, DetailView
+from django.views.generic.base import View
+
+from .models import User, Reader, Author, Book
 
 
 def index(request):
     return render(request, 'library/index.html')
 
 
-class AuthorListView(generic.ListView):
+class LoginView(View):
+
+    def get(self, request):
+        if request.user.is_authenticated:
+            return redirect('library:index')
+        return render(request, 'library/login.html')
+
+    def post(self, request):
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None and user.can_login():
+            login(request, user)
+            return redirect('library:index')
+        else:
+            return render(request, 'library/login.html', {'message': '用户名或密码错误'})
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('library:index')
+
+
+class RegisterView(View):
+
+    def get(self, request):
+        return render(request, 'library/register.html')
+
+    def post(self, request):
+        username = request.POST.get('username')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        message = ''
+
+        if not re.fullmatch('[0-9A-Za-z_]+', username):
+            message = '用户名只能包含字母、数字和下划线'
+        elif User.objects.filter(username=username).exists():
+            message = '用户名已存在'
+        elif password1 != password2:
+            message = '两次密码不一致'
+
+        if message:
+            return render(request, 'library/register.html', {'message': message})
+        user = User.objects.create_user(username, email, password1, first_name=name)
+        user.save()
+        user.groups.add(Group.objects.get(name=settings.READER_GROUP))
+        Reader.objects.create(user=user)
+        return redirect('library:index')
+
+
+def search(request):
+    return render(request, 'library/search.html')
+
+
+class SearchBookView(ListView):
 
     def get_queryset(self):
-        if 'name' in self.request.GET:
-            return Author.objects.filter(name__contains=self.request.GET['name'])
-        else:
-            return Author.objects.all()
+        return Book.objects.filter(title__contains=self.request.GET['title'])
 
 
-class AuthorDetailView(generic.DetailView):
-    model = Author
-
-
-class BookListView(generic.ListView):
+class SearchAuthorView(ListView):
 
     def get_queryset(self):
-        if 'title' in self.request.GET:
-            return Book.objects.filter(title__contains=self.request.GET['title'])
-        else:
-            return Book.objects.all()
+        return Author.objects.filter(name__contains=self.request.GET['name'])
 
 
-class BookDetailView(generic.DetailView):
+class BookDetailView(DetailView):
     model = Book
 
 
-class BooksOfAuthorView(generic.ListView):
+class AuthorDetailView(DetailView):
+    model = Author
+
+
+class BooksOfAuthorView(ListView):
 
     def get_queryset(self):
         author = get_object_or_404(Author, pk=self.request.GET['aid'])
