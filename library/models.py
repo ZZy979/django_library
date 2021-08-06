@@ -18,9 +18,15 @@ class User(AbstractUser):
 class Reader(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='+')
 
+    def __str__(self):
+        return self.user.username
+
 
 class Librarian(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='+')
+
+    def __str__(self):
+        return self.user.username
 
 
 class Author(models.Model):

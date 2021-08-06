@@ -44,7 +44,7 @@ class RegisterView(View):
 
     def post(self, request):
         username = request.POST.get('username')
-        password1 = request.POST.get('password1')
+        password = request.POST.get('password')
         password2 = request.POST.get('password2')
         name = request.POST.get('name')
         email = request.POST.get('email')
@@ -54,13 +54,12 @@ class RegisterView(View):
             message = '用户名只能包含字母、数字和下划线'
         elif User.objects.filter(username=username).exists():
             message = '用户名已存在'
-        elif password1 != password2:
+        elif password != password2:
             message = '两次密码不一致'
 
         if message:
             return render(request, 'library/register.html', {'message': message})
-        user = User.objects.create_user(username, email, password1, first_name=name)
-        user.save()
+        user = User.objects.create_user(username, email, password, first_name=name)
         user.groups.add(Group.objects.get(name=settings.READER_GROUP))
         Reader.objects.create(user=user)
         return redirect('library:index')
