@@ -3,11 +3,11 @@ import re
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import Group
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect
 from django.views.generic import ListView, DetailView
 from django.views.generic.base import View
 
-from .models import User, Reader, Author, Book
+from .models import User, Reader, Book
 
 
 def index(request):
@@ -75,22 +75,5 @@ class SearchBookView(ListView):
         return Book.objects.filter(title__contains=self.request.GET['title'])
 
 
-class SearchAuthorView(ListView):
-
-    def get_queryset(self):
-        return Author.objects.filter(name__contains=self.request.GET['name'])
-
-
 class BookDetailView(DetailView):
     model = Book
-
-
-class AuthorDetailView(DetailView):
-    model = Author
-
-
-class BooksOfAuthorView(ListView):
-
-    def get_queryset(self):
-        author = get_object_or_404(Author, pk=self.request.GET['aid'])
-        return author.book_set.all()

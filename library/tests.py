@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import User, Reader, Librarian, Author, Book
+from .models import User, Reader, Librarian, Book
 
 
 def create_test_user_and_group():
@@ -73,20 +73,17 @@ class RegisterViewTests(TestCase):
         self.assertTrue(Reader.objects.filter(user=cindy).exists())
 
 
-def create_test_author_and_book():
-    twain = Author.objects.create(name='Mark Twain', country='America')
-    swift = Author.objects.create(name='Jonathan Swift', country='England')
-
-    Book.objects.create(author=twain, title='The Adventures of Tom Sawyer', isbn='', publisher='', price=0)
-    Book.objects.create(author=twain, title='The Adventures of Huckleberry Finn', isbn='', publisher='', price=0)
-    Book.objects.create(author=swift, title="Gulliver's Travels", isbn='', publisher='', price=0)
+def create_test_books():
+    Book.objects.create(title='The Adventures of Tom Sawyer', author='Mark Twain')
+    Book.objects.create(title='The Adventures of Huckleberry Finn', author='Mark Twain')
+    Book.objects.create(title="Gulliver's Travels", author='Jonathan Swift')
 
 
 class SearchBookViewTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        create_test_author_and_book()
+        create_test_books()
 
     def test_search_book(self):
         response = self.client.get(reverse('library:search-book'), {'title': 'adventures'})
@@ -100,28 +97,11 @@ class SearchBookViewTests(TestCase):
         self.assertQuerysetEqual(response.context['book_list'], [])
 
 
-class SearchAuthorViewTests(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        create_test_author_and_book()
-
-    def test_search_author(self):
-        response = self.client.get(reverse('library:search-author'), {'name': 'Swift'})
-        self.assertEqual(response.status_code, 200)
-        self.assertQuerysetEqual(response.context['author_list'], ['<Author: Jonathan Swift>'])
-
-    def test_no_result(self):
-        response = self.client.get(reverse('library:search-author'), {'name': 'xxx'})
-        self.assertContains(response, '没有符合条件的作者')
-        self.assertQuerysetEqual(response.context['author_list'], [])
-
-
 class BookDetailViewTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        create_test_author_and_book()
+        create_test_books()
 
     def test_ok(self):
         book = Book.objects.get(pk=1)
@@ -132,37 +112,3 @@ class BookDetailViewTests(TestCase):
     def test_not_found(self):
         response = self.client.get(reverse('library:book-detail', args=(999,)))
         self.assertEqual(404, response.status_code)
-
-
-class AuthorDetailViewTests(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        create_test_author_and_book()
-
-    def test_ok(self):
-        author = Author.objects.get(pk=1)
-        response = self.client.get(reverse('library:author-detail', args=(1,)))
-        self.assertContains(response, author.name)
-        self.assertContains(response, author.country)
-
-    def test_not_found(self):
-        response = self.client.get(reverse('library:author-detail', args=(999,)))
-        self.assertEqual(404, response.status_code)
-
-
-class BooksOfAuthorViewTests(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        create_test_author_and_book()
-
-    def test_query_books_of_author(self):
-        response = self.client.get(reverse('library:books-of-author'), {'aid': 1})
-        self.assertEqual(response.status_code, 200)
-        expected = ['<Book: The Adventures of Tom Sawyer>', '<Book: The Adventures of Huckleberry Finn>']
-        self.assertQuerysetEqual(response.context['book_list'], expected, ordered=False)
-
-    def test_no_such_author(self):
-        response = self.client.get(reverse('library:books-of-author'), {'aid': 9999})
-        self.assertEqual(response.status_code, 404)

@@ -11,13 +11,4 @@
             <input type="submit" class="btn btn-success col-sm-2 ml-sm-2 my-2" value="确定">
         </div>
     </form>
-    <hr>
-    <h3 class="my-3">检索作者</h3>
-    <form action="{% url 'library:search-author' %}" method="get">
-        <div class="form-row align-items-center">
-            <label for="name-input" class="col-sm-1 mr-sm-2 my-2">姓名</label>
-            <input id="name-input" type="search" name="name" class="form-control col-sm-6" required>
-            <input type="submit" class="btn btn-success col-sm-2 ml-sm-2 my-2" value="确定">
-        </div>
-    </form>
 {% endblock %}

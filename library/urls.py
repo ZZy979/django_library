@@ -10,8 +10,5 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('search/', views.search, name='search'),
     path('search-book/', views.SearchBookView.as_view(), name='search-book'),
-    path('search-author/', views.SearchAuthorView.as_view(), name='search-author'),
     path('book/<int:pk>/', views.BookDetailView.as_view(), name='book-detail'),
-    path('author/<int:pk>/', views.AuthorDetailView.as_view(), name='author-detail'),
-    path('books-of-author/', views.BooksOfAuthorView.as_view(), name='books-of-author'),
 ]
