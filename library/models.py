@@ -29,13 +29,22 @@ class Librarian(models.Model):
         return self.user.username
 
 
+class Tag(models.Model):
+    """图书标签"""
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+
 class Book(models.Model):
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=255)
     publisher = models.CharField(max_length=255, default='')
     publish_date = models.DateField(blank=True, null=True)
-    price = models.DecimalField(max_digits=7, decimal_places=2, default=0)
+    price = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True)
     isbn = models.CharField(max_length=13, default='')
+    tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True)
     introduction = models.TextField(max_length=4096, default='')
 
     def __str__(self):

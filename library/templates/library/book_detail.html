@@ -3,35 +3,29 @@
 {% block title %}图书详细信息{% endblock %}
 
 {% block content %}
-    <h3 class="text-center my-3">图书详细信息</h3>
-    <table class="table">
+    <h3 class="my-4">{{ book.title }}</h3>
+    <table class="table w-50">
     <tr>
-        <td>书名</td>
-        <td>{{ book.title }}</td>
-    </tr>
-    <tr>
-        <td>作者</td>
+        <th scope="row">作者</th>
         <td>{{ book.author }}</td>
     </tr>
     <tr>
-        <td>出版社</td>
+        <th scope="row">出版社</th>
         <td>{{ book.publisher }}</td>
     </tr>
     <tr>
-        <td>出版日期</td>
+        <th scope="row">出版日期</th>
         <td>{{ book.publish_date }}</td>
     </tr>
     <tr>
-        <td>价格</td>
+        <th scope="row">价格</th>
         <td>{{ book.price }}</td>
     </tr>
     <tr>
-        <td>ISBN</td>
+        <th scope="row">ISBN</th>
         <td>{{ book.isbn }}</td>
     </tr>
-    <tr>
-        <td>简介</td>
-        <td>{{ book.introduction }}</td>
-    </tr>
     </table>
+    <h3 class="my-3">简介</h3>
+    <p>{{ book.introduction }}</p>
 {% endblock %}
