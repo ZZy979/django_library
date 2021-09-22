@@ -1,4 +1,4 @@
-{% extends 'library/base.html' %}
+{% extends 'library/reader/base.html' %}
 
 {% block title %}图书检索结果{% endblock %}
 
@@ -9,8 +9,11 @@
         {% for book in book_list %}
             <div class="card my-2">
                 <div class="card-body">
-                    <p><a href="{% url 'library:book-detail' book.id %}">{{ book.title }}</a></p>
-                    <small>{{ book.author.name }}</small>
+                    <h5 class="card-title">
+                        <a href="{% url 'library:book-detail' book.id %}">{{ book.title }}</a>
+                    </h5>
+                    <p class="card-text">{{ book.author }}</p>
+                    <small class="card-text">{{ book.publisher }}</small>
                 </div>
             </div>
         {% endfor %}

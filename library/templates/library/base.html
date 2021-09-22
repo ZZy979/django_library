@@ -11,31 +11,32 @@
     <script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </head>
 <body>
-<header class="navbar navbar-light bg-light navbar-expand-sm px-3 mb-1">
-    <a href="{% url 'library:index' %}" class="navbar-brand">图书管理系统</a>
-    <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#nav">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div id="nav" class="collapse navbar-collapse">
-        <ul class="navbar-nav flex-sm-grow-1">
-            <li class="nav-item"><a href="{% url 'library:search' %}" class="nav-link">检索图书</a></li>
-        </ul>
-        {% if user.is_authenticated %}
-            <div class="d-flex justify-content-sm-end">
-                <span>{% if user.is_reader %}读者{% else %}管理员{% endif %}</span>
+<header>
+    <nav class="navbar navbar-expand-sm navbar-light bg-light px-5 mb-1">
+        <a href="{% url 'library:index' %}" class="navbar-brand">图书管理系统</a>
+        <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#nav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="nav" class="collapse navbar-collapse">
+            <div class="mr-auto">
+                {% block nav %}{% endblock %}
+            </div>
+            {% if user.is_authenticated %}
+                <span>{% if user.is_librarian %}管理员{% else %}读者{% endif %}</span>
                 <div class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">{% firstof user.get_short_name user.get_username %}</a>
                     <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item">修改密码</a>
                         <a href="{% url 'library:logout' %}" class="dropdown-item" onclick="return confirm('确认注销？')">注销</a>
                     </div>
                 </div>
                 <span>，欢迎！</span>
-            </div>
-        {% else %}
-            <a href="{% url 'library:login' %}" class="btn btn-outline-secondary mx-1">登录</a>
-            <a href="{% url 'library:register' %}" class="btn btn-outline-secondary mx-1">注册</a>
-        {% endif %}
-    </div>
+            {% else %}
+                <a href="{% url 'library:login' %}" class="btn btn-outline-secondary mx-1">登录</a>
+                <a href="{% url 'library:register' %}" class="btn btn-outline-secondary mx-1">注册</a>
+            {% endif %}
+        </div>
+    </nav>
 </header>
 <main>
     <div id="main" class="container">

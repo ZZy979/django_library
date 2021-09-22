@@ -49,3 +49,35 @@ class Book(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Copy(models.Model):
+    """馆藏图书副本"""
+
+    class Status(models.TextChoices):
+        IN_STOCK = 'in stock', '可借'
+        ON_LOAN = 'on loan', '借出'
+
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    status = models.CharField(max_length=255, choices=Status.choices, default=Status.IN_STOCK)
+
+    def __str__(self):
+        return f'{self.id} - {self.book.title}'
+
+
+class Borrow(models.Model):
+    """借阅记录"""
+    reader = models.ForeignKey(Reader, on_delete=models.CASCADE)
+    copy = models.ForeignKey(Copy, on_delete=models.CASCADE)
+    borrow_date = models.DateTimeField(auto_now_add=True)
+    lend_librarian = models.ForeignKey(
+        Librarian, on_delete=models.SET_NULL, null=True, related_name='lend_set'
+    )
+    due_date = models.DateTimeField()
+    return_date = models.DateTimeField(blank=True, null=True)
+    return_librarian = models.ForeignKey(
+        Librarian, on_delete=models.SET_NULL, null=True, related_name='return_set'
+    )
+
+    def __str__(self):
+        return f'{self.reader.user.get_full_name()} - {self.copy}'

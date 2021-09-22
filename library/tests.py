@@ -1,4 +1,7 @@
+from urllib.parse import quote
+
 from django.conf import settings
+from django.contrib.auth import SESSION_KEY
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from django.urls import reverse
@@ -38,6 +41,44 @@ class UserModelTests(TestCase):
             self.assertEqual(can_login, user.can_login())
 
 
+class LoginViewTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        create_test_user_and_group()
+
+    def test_get(self):
+        response = self.client.get(reverse('library:login'))
+        self.assertTemplateUsed(response, 'library/account/login.html')
+
+    def test_get_already_login(self):
+        self.client.post(reverse('library:login'), data={'username': 'alice', 'password': '1234'})
+        response = self.client.get(reverse('library:login'))
+        self.assertRedirects(response, reverse('library:index'))
+
+    def test_ok(self):
+        data = {'username': 'bob', 'password': '1234'}
+        response = self.client.post(reverse('library:login'), data)
+        self.assertEqual('2', self.client.session[SESSION_KEY])
+        self.assertRedirects(response, reverse('library:index'))
+
+    def test_redirect(self):
+        redirect_url = reverse('library:search-book') + '?title=xxx'
+        login_url = '{}?next={}'.format(reverse('library:login'), quote(redirect_url))
+        response = self.client.get(login_url)
+        self.assertContains(response, 'action="{}"'.format(login_url))
+
+        data = {'username': 'bob', 'password': '1234'}
+        response = self.client.post(login_url, data)
+        self.assertRedirects(response, redirect_url)
+
+    def test_wrong_username_or_password(self):
+        data = {'username': 'bob', 'password': '5678'}
+        response = self.client.post(reverse('library:login'), data)
+        self.assertTemplateUsed(response, 'library/account/login.html')
+        self.assertContains(response, '用户名或密码错误')
+
+
 class RegisterViewTests(TestCase):
 
     @classmethod
@@ -46,7 +87,7 @@ class RegisterViewTests(TestCase):
 
     def test_get(self):
         response = self.client.get(reverse('library:register'))
-        self.assertTemplateUsed(response, 'library/register.html')
+        self.assertTemplateUsed(response, 'library/account/register.html')
 
     def test_invalid_username(self):
         data = {'username': '@#%', 'password': '1234', 'password2': '1234'}
@@ -66,7 +107,7 @@ class RegisterViewTests(TestCase):
     def test_ok(self):
         data = {'username': 'cindy', 'password': '1234', 'password2': '1234', 'name': '', 'email': ''}
         response = self.client.post(reverse('library:register'), data)
-        self.assertRedirects(response, reverse('library:index'))
+        self.assertRedirects(response, reverse('library:login'))
         cindy = User.objects.get(username='cindy')
         self.assertTrue(cindy.is_reader())
         self.assertFalse(cindy.is_librarian())
@@ -83,7 +124,11 @@ class SearchBookViewTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        create_test_user_and_group()
         create_test_books()
+
+    def setUp(self):
+        self.client.post(reverse('library:login'), data={'username': 'bob', 'password': '1234'})
 
     def test_search_book(self):
         response = self.client.get(reverse('library:search-book'), {'title': 'adventures'})
@@ -96,12 +141,29 @@ class SearchBookViewTests(TestCase):
         self.assertContains(response, '没有符合条件的图书')
         self.assertQuerysetEqual(response.context['book_list'], [])
 
+    def test_not_login(self):
+        self.client.get(reverse('library:logout'))
+        response = self.client.get(reverse('library:search-book'), {'title': 'xxx'})
+        self.assertRedirects(response, '{}?next={}'.format(
+            reverse('library:login'), quote(reverse('library:search-book') + '?title=xxx')
+        ))
+
+    def test_not_login_as_reader(self):
+        for username in ('alice', 'guest'):
+            self.client.post(reverse('library:login'), data={'username': username, 'password': '1234'})
+            response = self.client.get(reverse('library:search-book'), {'title': 'xxx'})
+            self.assertEqual(403, response.status_code)
+
 
 class BookDetailViewTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        create_test_user_and_group()
         create_test_books()
+
+    def setUp(self):
+        self.client.post(reverse('library:login'), data={'username': 'bob', 'password': '1234'})
 
     def test_ok(self):
         book = Book.objects.get(pk=1)
