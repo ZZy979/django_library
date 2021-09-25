@@ -1,10 +1,9 @@
-{% extends 'library/reader/base.html' %}
+{% extends 'library/base.html' %}
 
 {% block title %}图书检索结果{% endblock %}
 
 {% block content %}
-    <h3 class="text-center my-3">图书检索结果</h3>
-    <div class="mx-auto" style="max-width: 40rem">
+    <h3 class="text-center my-4">图书检索结果</h3>
     {% if book_list %}
         {% for book in book_list %}
             <div class="card my-2">
@@ -20,5 +19,4 @@
     {% else %}
         <p>没有符合条件的图书</p>
     {% endif %}
-    </div>
 {% endblock %}

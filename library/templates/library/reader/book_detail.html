@@ -1,4 +1,4 @@
-{% extends 'library/reader/base.html' %}
+{% extends 'library/base.html' %}
 
 {% block title %}图书详细信息{% endblock %}
 
@@ -26,6 +26,6 @@
         <td>{{ book.isbn }}</td>
     </tr>
     </table>
-    <h3 class="my-3">简介</h3>
+    <h3 class="my-4">简介</h3>
     <p>{{ book.introduction }}</p>
 {% endblock %}

@@ -13,4 +13,8 @@ urlpatterns = [
     path('search/', views.search, name='search'),
     path('search-book/', views.SearchBookView.as_view(), name='search-book'),
     path('book/<int:pk>/', views.BookDetailView.as_view(), name='book-detail'),
+
+    # 管理员视图
+    path('book/list/', views.ListBookView.as_view(), name='list-book'),
+    path('book/<int:pk>/change/', views.ChangeBookView.as_view(), name='change-book'),
 ]

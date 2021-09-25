@@ -12,14 +12,20 @@
 </head>
 <body>
 <header>
-    <nav class="navbar navbar-expand-sm navbar-light bg-light px-5 mb-1">
+    <nav class="navbar navbar-expand-md navbar-light bg-light px-5 mb-1">
         <a href="{% url 'library:index' %}" class="navbar-brand">图书管理系统</a>
         <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#nav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div id="nav" class="collapse navbar-collapse">
             <div class="mr-auto">
-                {% block nav %}{% endblock %}
+                {% if user.is_authenticated %}
+                    {% if user.is_librarian %}
+                        {% include 'library/librarian/nav.html' %}
+                    {% else %}
+                        {% include 'library/reader/nav.html' %}
+                    {% endif %}
+                {% endif %}
             </div>
             {% if user.is_authenticated %}
                 <span>{% if user.is_librarian %}管理员{% else %}读者{% endif %}</span>

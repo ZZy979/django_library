@@ -3,13 +3,13 @@ import re
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout, REDIRECT_FIELD_NAME
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.views.generic.base import View
 
-from .models import User, Reader, Book
+from .mixin import LoginAsReaderRequiredMixin, LoginAsLibrarianRequiredMixin
+from .models import User, Reader, Book, Tag
 
 
 class LoginView(View):
@@ -75,25 +75,53 @@ def index(request):
         return render(request, 'library/reader/index.html')
 
 
+# ==========读者视图==========
+
 @user_passes_test(User.is_reader)
 @login_required
 def search(request):
     return render(request, 'library/reader/search.html')
 
 
-class SearchBookView(UserPassesTestMixin, ListView):
-    template_name = 'library/reader/book_list.html'
+class SearchBookView(LoginAsReaderRequiredMixin, ListView):
+    template_name = 'library/reader/search_result.html'
 
     def get_queryset(self):
         return Book.objects.filter(title__contains=self.request.GET['title'])
 
-    def test_func(self):
-        return self.request.user.is_authenticated and self.request.user.is_reader()
 
-
-class BookDetailView(UserPassesTestMixin, DetailView):
+class BookDetailView(LoginAsReaderRequiredMixin, DetailView):
     model = Book
     template_name = 'library/reader/book_detail.html'
 
-    def test_func(self):
-        return self.request.user.is_authenticated and self.request.user.is_reader()
+
+# ==========管理员视图==========
+
+class ListBookView(LoginAsLibrarianRequiredMixin, ListView):
+    model = Book
+    template_name = 'library/librarian/list_book.html'
+
+
+class ChangeBookView(LoginAsLibrarianRequiredMixin, DetailView):
+    model = Book
+    template_name = 'library/librarian/change_book.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tags'] = Tag.objects.all()
+        return context
+
+    def post(self, request, pk):
+        book = get_object_or_404(Book, pk=pk)
+        book.title = request.POST.get('title')
+        book.author = request.POST.get('author')
+        book.publisher = request.POST.get('publisher')
+        book.publish_date = request.POST.get('publish-date') or None
+        price = request.POST.get('price')
+        book.price = float(price) if price else None
+        book.isbn = request.POST.get('isbn')
+        tag_id = request.POST.get('tag')
+        book.tag_id = int(tag_id) if tag_id else None
+        book.introduction = request.POST.get('introduction')
+        book.save()
+        return redirect('library:list-book')

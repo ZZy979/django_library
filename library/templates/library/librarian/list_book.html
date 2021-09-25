@@ -1,0 +1,18 @@
+{% extends 'library/base.html' %}
+
+{% block title %}图书管理{% endblock %}
+
+{% block content %}
+    <h3 class="text-center my-4">图书管理</h3>
+    {% for book in book_list %}
+        <div class="card my-2">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="{% url 'library:change-book' book.id %}">{{ book.title }}</a>
+                </h5>
+                <p class="card-text">{{ book.author }}</p>
+                <small class="card-text">{{ book.publisher }}</small>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}
