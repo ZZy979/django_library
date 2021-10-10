@@ -13,7 +13,7 @@
     * [ ] 修改个人资料
 * 检索图书
     * [x] 根据书名查询图书
-        * [ ] 分页显示
+        * [x] 分页显示
     * [x] 查看图书详细信息
 * 借阅
     * [ ] 借阅图书
@@ -36,9 +36,3 @@
     * [ ] 借出
     * [ ] 归还
     * [ ] 查询
-
-## 加载初始数据
-```shell
-python manage.py migrate
-python manage.py loaddata data.json
-```

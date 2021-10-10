@@ -85,9 +85,19 @@ def search(request):
 
 class SearchBookView(LoginAsReaderRequiredMixin, ListView):
     template_name = 'library/reader/search_result.html'
+    ordering = ['title']
+    paginate_by = settings.PAGE_SIZE
 
     def get_queryset(self):
-        return Book.objects.filter(title__contains=self.request.GET['title'])
+        self.queryset = Book.objects.filter(title__contains=self.request.GET['title'])
+        return super().get_queryset()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page = context['page_obj']
+        context['page_range'] = context['paginator'].get_elided_page_range(page.number)
+        context['title'] = self.request.GET['title']
+        return context
 
 
 class BookDetailView(LoginAsReaderRequiredMixin, DetailView):
@@ -100,6 +110,14 @@ class BookDetailView(LoginAsReaderRequiredMixin, DetailView):
 class ListBookView(LoginAsLibrarianRequiredMixin, ListView):
     model = Book
     template_name = 'library/librarian/list_book.html'
+    ordering = ['title']
+    paginate_by = settings.PAGE_SIZE
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page = context['page_obj']
+        context['page_range'] = context['paginator'].get_elided_page_range(page.number)
+        return context
 
 
 class ChangeBookView(LoginAsLibrarianRequiredMixin, DetailView):
@@ -113,15 +131,15 @@ class ChangeBookView(LoginAsLibrarianRequiredMixin, DetailView):
 
     def post(self, request, pk):
         book = get_object_or_404(Book, pk=pk)
-        book.title = request.POST.get('title')
-        book.author = request.POST.get('author')
-        book.publisher = request.POST.get('publisher')
+        book.title = request.POST['title']
+        book.author = request.POST['author']
+        book.publisher = request.POST.get('publisher', '')
         book.publish_date = request.POST.get('publish-date') or None
         price = request.POST.get('price')
         book.price = float(price) if price else None
-        book.isbn = request.POST.get('isbn')
+        book.isbn = request.POST.get('isbn', '')
         tag_id = request.POST.get('tag')
         book.tag_id = int(tag_id) if tag_id else None
-        book.introduction = request.POST.get('introduction')
+        book.introduction = request.POST.get('introduction', '')
         book.save()
         return redirect('library:list-book')

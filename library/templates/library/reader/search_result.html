@@ -3,7 +3,7 @@
 {% block title %}图书检索结果{% endblock %}
 
 {% block content %}
-    <h3 class="text-center my-4">图书检索结果</h3>
+    <h3 class="text-center my-4">“{{ title }}”检索结果</h3>
     {% if book_list %}
         {% for book in book_list %}
             <div class="card my-2">
@@ -16,6 +16,25 @@
                 </div>
             </div>
         {% endfor %}
+        {% if is_paginated %}
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a href="?title={{ title }}&page={{ page_obj.previous_page_number }}" class="page-link">上一页</a></li>
+                {% endif %}
+                {% for p in page_range %}
+                    {% if p == paginator.ELLIPSIS %}
+                        <li class="page-item disabled"><a href="#" class="page-link">...</a></li>
+                    {% elif p == page_obj.number %}
+                        <li class="page-item active"><a href="?title={{ title }}&page={{ p }}" class="page-link">{{ p }}</a></li>
+                    {% else %}
+                        <li class="page-item"><a href="?title={{ title }}&page={{ p }}" class="page-link">{{ p }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a href="?title={{ title }}&page={{ page_obj.next_page_number }}" class="page-link">下一页</a></li>
+                {% endif %}
+            </ul>
+        {% endif %}
     {% else %}
         <p>没有符合条件的图书</p>
     {% endif %}

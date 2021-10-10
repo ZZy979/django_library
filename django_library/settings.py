@@ -129,5 +129,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'library.User'
 LOGIN_URL = 'library:login'
 
+# 自定义设置
 READER_GROUP = 'Reader'
 LIBRARIAN_GROUP = 'Librarian'
+PAGE_SIZE = 20

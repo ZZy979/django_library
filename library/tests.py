@@ -6,7 +6,7 @@ from django.contrib.auth.models import Group
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import User, Reader, Librarian, Book
+from .models import User, Reader, Librarian, Tag, Book
 
 
 def create_test_user_and_group():
@@ -115,9 +115,11 @@ class RegisterViewTests(TestCase):
 
 
 def create_test_books():
-    Book.objects.create(title='The Adventures of Tom Sawyer', author='Mark Twain')
-    Book.objects.create(title='The Adventures of Huckleberry Finn', author='Mark Twain')
-    Book.objects.create(title="Gulliver's Travels", author='Jonathan Swift')
+    Tag.objects.bulk_create([Tag(id=i, name=f'T{i}') for i in range(1, 4)])
+    Book.objects.bulk_create([
+        Book(id=i, title=f'B{i}', author=f'A{i}', tag_id=i % 3 + 1)
+        for i in range(1, 11)
+    ])
 
 
 class SearchBookViewTests(TestCase):
@@ -131,10 +133,9 @@ class SearchBookViewTests(TestCase):
         self.client.post(reverse('library:login'), data={'username': 'bob', 'password': '1234'})
 
     def test_search_book(self):
-        response = self.client.get(reverse('library:search-book'), {'title': 'adventures'})
+        response = self.client.get(reverse('library:search-book'), {'title': 'B1'})
         self.assertEqual(200, response.status_code)
-        expected = ['<Book: The Adventures of Tom Sawyer>', '<Book: The Adventures of Huckleberry Finn>']
-        self.assertQuerysetEqual(response.context['book_list'], expected, ordered=False)
+        self.assertQuerysetEqual(response.context['book_list'], ['<Book: B1>', '<Book: B10>'])
 
     def test_no_result(self):
         response = self.client.get(reverse('library:search-book'), {'title': 'xxx'})
@@ -174,3 +175,59 @@ class BookDetailViewTests(TestCase):
     def test_not_found(self):
         response = self.client.get(reverse('library:book-detail', args=(999,)))
         self.assertEqual(404, response.status_code)
+
+
+class ListBookViewTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        create_test_user_and_group()
+        create_test_books()
+
+    def setUp(self):
+        self.client.post(reverse('library:login'), data={'username': 'alice', 'password': '1234'})
+
+    def test_ok(self):
+        response = self.client.get(reverse('library:list-book'))
+        self.assertEqual(200, response.status_code)
+        expected = Book.objects.all().order_by('title')
+        self.assertQuerysetEqual(response.context['book_list'], expected)
+
+
+class ChangeBookViewTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        create_test_user_and_group()
+        create_test_books()
+
+    def setUp(self):
+        self.client.post(reverse('library:login'), data={'username': 'alice', 'password': '1234'})
+
+    def test_get(self):
+        response = self.client.get(reverse('library:change-book', args=(1,)))
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, 'library/librarian/change_book.html')
+        self.assertContains(response, 'B1')
+
+    def test_post(self):
+        data = {'title': 'B1*', 'author': 'A1*', 'tag': '3'}
+        response = self.client.post(reverse('library:change-book', args=(1,)), data=data)
+        self.assertRedirects(response, reverse('library:list-book'))
+        book = Book.objects.get(id=1)
+        self.assertEqual('B1*', book.title)
+        self.assertEqual('A1*', book.author)
+        self.assertEqual(3, book.tag_id)
+
+    def test_not_login(self):
+        self.client.get(reverse('library:logout'))
+        response = self.client.get(reverse('library:change-book', args=(1,)))
+        self.assertRedirects(response, '{}?next={}'.format(
+            reverse('library:login'), quote(reverse('library:change-book', args=(1,)))
+        ))
+
+    def test_not_login_as_librarian(self):
+        for username in ('bob', 'guest'):
+            self.client.post(reverse('library:login'), data={'username': username, 'password': '1234'})
+            response = self.client.get(reverse('library:change-book', args=(1,)))
+            self.assertEqual(403, response.status_code)
