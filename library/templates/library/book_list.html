@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Book List</title>
+</head>
+<body>
+<h1>Book List</h1>
+<form action="{% url 'library:book-list' %}" method="get">
+    <input type="text" name="q" placeholder="Search books...">
+    <button type="submit">Search</button>
+</form>
+<ul>
+{% for book in book_list %}
+    <li>
+        {{ book.title }} by {{ book.author }} (ISBN: {{ book.isbn }})
+        <a href="{% url 'library:borrow-book' book.id %}">Borrow</a>
+    </li>
+{% endfor %}
+</ul>
+</body>
+</html>
