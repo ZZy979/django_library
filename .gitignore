@@ -1,8 +1,0 @@
-# PyCharm
-/.idea/
-
-# Python
-__pycache__/
-
-/db.sqlite3
-/static
