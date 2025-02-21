@@ -1,12 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Book List</title>
-</head>
-<body>
+{% extends 'library/base.html' %}
+
+{% block title %}Book List{% endblock %}
+
+{% block content %}
 <h1>Book List</h1>
-<form action="{% url 'library:book-list' %}" method="get">
+<form action="{% url 'library:search-book' %}" method="get">
     <input type="text" name="q" placeholder="Search books...">
     <button type="submit">Search</button>
 </form>
@@ -16,7 +14,8 @@
         {{ book.title }} by {{ book.author }} (ISBN: {{ book.isbn }})
         <a href="{% url 'library:borrow-book' book.id %}">Borrow</a>
     </li>
+{% empty %}
+    <p>No results found.</p>
 {% endfor %}
 </ul>
-</body>
-</html>
+{% endblock %}

@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-</head>
-<body>
+{% extends 'library/base.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
 <h1>Login</h1>
 <form action="{% url 'library:login' %}" method="post">
     {% csrf_token %}
@@ -21,5 +19,4 @@
     {% endfor %}
     </ul>
 {% endif %}
-</body>
-</html>
+{% endblock %}

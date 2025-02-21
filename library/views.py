@@ -13,13 +13,13 @@ def user_login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('library:book-list')
+            return redirect('library:search-book')
         else:
             messages.error(request, 'Invalid username or password.')
     return render(request, 'library/login.html')
 
 
-class BookListView(ListView):
+class SearchBookView(ListView):
     def get_queryset(self):
         if query := self.request.GET.get('q'):
             return Book.objects.filter(title__icontains=query)
@@ -33,4 +33,4 @@ def borrow_book(request, book_id):
         BorrowRecord.objects.create(user=request.user, book=book)
         book.quantity -= 1
         book.save()
-    return redirect('library:book-list')
+    return redirect('library:search-book')
