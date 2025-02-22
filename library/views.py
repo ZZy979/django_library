@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView
 
@@ -27,6 +28,7 @@ class SearchBookView(ListView):
             return Book.objects.all()
 
 
+@login_required
 def borrow_book(request, book_id):
     book = get_object_or_404(Book, pk=book_id)
     if book.quantity > 0:

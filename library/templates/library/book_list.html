@@ -11,8 +11,12 @@
 <ul>
 {% for book in book_list %}
     <li>
-        {{ book.title }} by {{ book.author }} (ISBN: {{ book.isbn }})
-        <a href="{% url 'library:borrow-book' book.id %}">Borrow</a>
+        {{ book.title }} by {{ book.author }} ISBN: {{ book.isbn }} Quantity: {{ book.quantity }}
+        {% if book.quantity > 0 %}
+            <a href="{% url 'library:borrow-book' book.id %}">Borrow</a>
+        {% else %}
+            (Out of Stock)
+        {% endif %}
     </li>
 {% empty %}
     <p>No results found.</p>

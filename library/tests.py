@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -63,3 +65,9 @@ class BorrowBookViewTest(TestCase):
         self.assertRedirects(response, reverse('library:search-book'))
         self.assertEqual(0, Book.objects.get(id=self.book.id).quantity)
         self.assertFalse(BorrowRecord.objects.filter(user=self.user, book=self.book).exists())
+
+    def test_not_login(self):
+        self.client.logout()
+        borrow_url = reverse('library:borrow-book', args=(self.book.id,))
+        response = self.client.post(borrow_url)
+        self.assertRedirects(response, reverse('library:login') + '?next=' + quote(borrow_url))

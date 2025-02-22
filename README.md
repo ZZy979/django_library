@@ -32,5 +32,5 @@ python manage.py runserver
 运行测试
 
 ```shell
-python manage.py test library
+python manage.py test
 ```
