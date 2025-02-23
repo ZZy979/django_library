@@ -11,7 +11,7 @@
 <ul>
 {% for book in book_list %}
     <li>
-        {{ book.title }} by {{ book.author }} ISBN: {{ book.isbn }} Quantity: {{ book.quantity }}
+        <a href="{% url 'library:book-detail' book.id %}">{{ book.title }}</a> by {{ book.author }} (Quantity: {{ book.quantity }})
         {% if book.quantity > 0 %}
             <a href="{% url 'library:borrow-book' book.id %}">Borrow</a>
         {% else %}

@@ -1,10 +1,13 @@
+import datetime
 from urllib.parse import quote
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import dateformat
 
-from .models import Book, BorrowRecord
+from .models import Book, BorrowRecord, Category
 
 
 class UserRegisterTest(TestCase):
@@ -81,6 +84,37 @@ class SearchBookViewTest(TestCase):
         response = self.client.get(reverse('library:search-book'), {'q': 'Flask'})
         self.assertEqual(200, response.status_code)
         self.assertContains(response, 'No results found.')
+
+
+class BookDetailViewTest(TestCase):
+
+    def setUp(self):
+        self.category = Category.objects.create(name='Programming')
+        self.book = Book.objects.create(
+            title='Django for Beginners',
+            author='William S. Vincent',
+            isbn='9781234567890',
+            publisher='WelcomeToCode',
+            pub_date=datetime.date(2020, 8, 10),
+            quantity=5,
+            category=self.category,
+            description='A great book for learning Django.'
+        )
+
+    def test_book_detail(self):
+        response = self.client.get(reverse('library:book-detail', args=(self.book.id,)))
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, self.book.title)
+        self.assertContains(response, self.book.author)
+        self.assertContains(response, self.book.isbn)
+        self.assertContains(response, self.book.publisher)
+        self.assertContains(response, dateformat.format(self.book.pub_date, settings.DATE_FORMAT))
+        self.assertContains(response, self.category.name)
+        self.assertContains(response, self.book.description)
+
+    def test_not_found(self):
+        response = self.client.get(reverse('library:book-detail', args=(9999,)))
+        self.assertEqual(404, response.status_code)
 
 
 class BorrowBookViewTest(TestCase):

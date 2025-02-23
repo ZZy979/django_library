@@ -1,0 +1,21 @@
+{% extends 'library/base.html' %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ book.title }}</h1>
+<p>Author: {{ book.author }}</p>
+<p>Publisher: {{ book.publisher }}</p>
+<p>Publication Date: {{ book.pub_date }}</p>
+<p>Category: {{ book.category.name }}</p>
+<p>ISBN: {{ book.isbn }}</p>
+<p>Quantity: {{ book.quantity }}</p>
+<p>Description: {{ book.description }}</p>
+
+{% if book.quantity > 0 %}
+    <a href="{% url 'library:borrow-book' book.id %}">Borrow</a>
+{% else %}
+    (Out of Stock)
+{% endif %}
+| <a href="{% url 'library:search-book' %}">Back to List</a>
+{% endblock %}

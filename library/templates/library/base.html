@@ -11,6 +11,7 @@
             <a href="{% url 'library:search-book' %}">Home</a> |
             {% if user.is_authenticated %}
             	<a href="{% url 'library:borrow-records' %}">Your Borrowed Books</a> |
+                Welcome {{ user.username }} |
                 <a href="{% url 'library:logout' %}">Logout</a>
             {% else %}
                 <a href="{% url 'library:login' %}">Login</a> |

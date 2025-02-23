@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 
 from .forms import UserRegisterForm
 from .models import Book, BorrowRecord
@@ -43,6 +43,10 @@ class SearchBookView(ListView):
             return Book.objects.filter(title__icontains=query)
         else:
             return Book.objects.all()
+
+
+class BookDetailView(DetailView):
+    model = Book
 
 
 @login_required
