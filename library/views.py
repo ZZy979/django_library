@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -38,11 +40,20 @@ def user_logout(request):
 
 
 class SearchBookView(ListView):
+    paginate_by = 20
+
     def get_queryset(self):
         if query := self.request.GET.get('q'):
             return Book.objects.filter(title__icontains=query)
         else:
             return Book.objects.all()
+
+    def get_context_data(self, **kwargs):
+        query_params = self.request.GET.copy()
+        if 'page' in query_params:
+            del query_params['page']
+        querystring = urlencode(query_params)
+        return super().get_context_data(querystring=querystring, **kwargs)
 
 
 class BookDetailView(DetailView):

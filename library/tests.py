@@ -69,11 +69,8 @@ class SearchBookViewTest(TestCase):
             title='Django for Beginners', author='William S. Vincent', isbn='9781234567890')
         self.python = Book.objects.create(
             title='Python Crash Course', author='Eric Matthes', isbn='9789876543210')
-
-    def test_list_all(self):
-        response = self.client.get(reverse('library:search-book'))
-        self.assertEqual(200, response.status_code)
-        self.assertQuerySetEqual(response.context['book_list'], Book.objects.all(), ordered=False)
+        for i in range(25):
+            Book.objects.create(title=f'Book {i}', author=f'Author {i}', isbn=str(i))
 
     def test_search_by_title(self):
         response = self.client.get(reverse('library:search-book'), {'q': 'Django'})
@@ -84,6 +81,25 @@ class SearchBookViewTest(TestCase):
         response = self.client.get(reverse('library:search-book'), {'q': 'Flask'})
         self.assertEqual(200, response.status_code)
         self.assertContains(response, 'No results found.')
+
+    def test_pagination(self):
+        response = self.client.get(reverse('library:search-book'))
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(20, len(response.context['book_list']))
+        page_obj = response.context['page_obj']
+        self.assertEqual(1, page_obj.number)
+        self.assertEqual(2, page_obj.paginator.num_pages)
+
+        response = self.client.get(reverse('library:search-book'), {'page': 2})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(7, len(response.context['book_list']))
+        self.assertEqual(2, response.context['page_obj'].number)
+
+    def test_pagination_with_search(self):
+        response = self.client.get(reverse('library:search-book'), {'q': 'Book', 'page': 2})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(5, len(response.context['book_list']))
+        self.assertIn('q=Book', response.context['querystring'])
 
 
 class BookDetailViewTest(TestCase):
