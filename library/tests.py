@@ -104,8 +104,40 @@ class BorrowBookViewTest(TestCase):
         self.assertEqual(0, Book.objects.get(id=self.book.id).quantity)
         self.assertFalse(BorrowRecord.objects.filter(user=self.user, book=self.book).exists())
 
-    def test_not_login(self):
+    def test_unauthenticated(self):
         self.client.logout()
         borrow_url = reverse('library:borrow-book', args=(self.book.id,))
         response = self.client.post(borrow_url)
         self.assertRedirects(response, reverse('library:login') + '?next=' + quote(borrow_url))
+
+
+class ReturnBookViewTest(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpassword123')
+        self.book = Book.objects.create(title='Test Book', author='Test Author', isbn='9781234567890')
+        self.borrow_record = BorrowRecord.objects.create(user=self.user, book=self.book)
+        self.client.login(username='testuser', password='testpassword123')
+
+    def test_success(self):
+        response = self.client.get(reverse('library:borrow-records'))
+        self.assertEqual(200, response.status_code)
+        self.assertQuerySetEqual(response.context['borrow_record_list'], [self.borrow_record])
+
+        response = self.client.post(reverse('library:return-book', args=(self.borrow_record.id,)))
+        self.assertRedirects(response, reverse('library:borrow-records'))
+        self.borrow_record.refresh_from_db()
+        self.assertIsNotNone(self.borrow_record.return_date)
+        self.assertEqual(2, Book.objects.get(id=self.book.id).quantity)
+
+    def test_unauthenticated(self):
+        self.client.logout()
+        borrow_records_url = reverse('library:borrow-records')
+        response = self.client.get(borrow_records_url)
+        self.assertRedirects(response, reverse('library:login') + '?next=' + quote(borrow_records_url))
+
+        return_url = reverse('library:return-book', args=(self.borrow_record.id,))
+        response = self.client.post(return_url)
+        self.assertRedirects(response, reverse('library:login') + '?next=' + quote(return_url))
+        self.borrow_record.refresh_from_db()
+        self.assertIsNone(self.borrow_record.return_date)

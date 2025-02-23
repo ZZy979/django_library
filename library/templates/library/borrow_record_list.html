@@ -1,0 +1,21 @@
+{% extends 'library/base.html' %}
+
+{% block title %}Your Borrowed Books{% endblock %}
+
+{% block content %}
+<h1>Your Borrowed Books</h1>
+<ul>
+{% for record in borrow_record_list %}
+	<li>
+        {{ record.book.title }} by {{ record.book.author }} (Borrowed on {{ record.borrow_date }})
+        {% if not record.return_date %}
+        	<a href="{% url 'library:return-book' record.id %}">Return</a>
+        {% else %}
+            (Returned on {{ record.return_date }})
+        {% endif %}
+    </li>
+{% empty %}
+    <p>You have not borrowed any books.</p>
+{% endfor %}
+</ul>
+{% endblock %}

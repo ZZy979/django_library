@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView
@@ -32,6 +32,11 @@ def user_login(request):
     return render(request, 'library/login.html')
 
 
+def user_logout(request):
+    logout(request)
+    return redirect('library:login')
+
+
 class SearchBookView(ListView):
     def get_queryset(self):
         if query := self.request.GET.get('q'):
@@ -48,3 +53,16 @@ def borrow_book(request, book_id):
         book.quantity -= 1
         book.save()
     return redirect('library:search-book')
+
+
+@login_required
+def return_book(request, record_id):
+    record = get_object_or_404(BorrowRecord, pk=record_id, user=request.user)
+    record.return_book()
+    return redirect('library:borrow-records')
+
+
+@login_required
+def borrow_records(request):
+    borrow_record_list = BorrowRecord.objects.filter(user=request.user).order_by('-borrow_date')
+    return render(request, 'library/borrow_record_list.html', {'borrow_record_list': borrow_record_list})

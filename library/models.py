@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import ForeignKey
+from django.utils import timezone
 
 
 class Book(models.Model):
@@ -18,6 +19,14 @@ class BorrowRecord(models.Model):
     book = ForeignKey(Book, on_delete=models.CASCADE)
     borrow_date = models.DateTimeField(auto_now_add=True)
     return_date = models.DateTimeField(null=True, blank=True)
+
+    def return_book(self):
+        if self.return_date is not None:
+            return
+        self.return_date = timezone.now()
+        self.book.quantity += 1
+        self.book.save()
+        self.save()
 
     def __str__(self):
         return f'{self.user.username} borrowed {self.book.title}'
