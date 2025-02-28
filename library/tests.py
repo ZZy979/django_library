@@ -47,8 +47,9 @@ class UserRegisterTest(TestCase):
 
 class UserLoginTest(TestCase):
 
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpassword123')
+    @classmethod
+    def setUpTestData(cls):
+        User.objects.create_user(username='testuser', password='testpassword123')
 
     def test_success(self):
         data = {'username': 'testuser', 'password': 'testpassword123'}
@@ -64,10 +65,11 @@ class UserLoginTest(TestCase):
 
 class SearchBookViewTest(TestCase):
 
-    def setUp(self):
-        self.django = Book.objects.create(
+    @classmethod
+    def setUpTestData(cls):
+        cls.django = Book.objects.create(
             title='Django for Beginners', author='William S. Vincent', isbn='9781234567890')
-        self.python = Book.objects.create(
+        cls.python = Book.objects.create(
             title='Python Crash Course', author='Eric Matthes', isbn='9789876543210')
         for i in range(25):
             Book.objects.create(title=f'Book {i}', author=f'Author {i}', isbn=str(i))
@@ -104,16 +106,17 @@ class SearchBookViewTest(TestCase):
 
 class BookDetailViewTest(TestCase):
 
-    def setUp(self):
-        self.category = Category.objects.create(name='Programming')
-        self.book = Book.objects.create(
+    @classmethod
+    def setUpTestData(cls):
+        cls.category = Category.objects.create(name='Programming')
+        cls.book = Book.objects.create(
             title='Django for Beginners',
             author='William S. Vincent',
             isbn='9781234567890',
             publisher='WelcomeToCode',
             pub_date=datetime.date(2020, 8, 10),
             quantity=5,
-            category=self.category,
+            category=cls.category,
             description='A great book for learning Django.'
         )
 
@@ -135,9 +138,12 @@ class BookDetailViewTest(TestCase):
 
 class BorrowBookViewTest(TestCase):
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username='testuser', password='testpassword123')
+        cls.book = Book.objects.create(title='Test Book', author='Test Author', isbn='9781234567890', quantity=2)
+
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpassword123')
-        self.book = Book.objects.create(title='Test Book', author='Test Author', isbn='9781234567890', quantity=2)
         self.client.login(username='testuser', password='testpassword123')
 
     def test_success(self):
@@ -163,10 +169,13 @@ class BorrowBookViewTest(TestCase):
 
 class ReturnBookViewTest(TestCase):
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username='testuser', password='testpassword123')
+        cls.book = Book.objects.create(title='Test Book', author='Test Author', isbn='9781234567890')
+        cls.borrow_record = BorrowRecord.objects.create(user=cls.user, book=cls.book)
+
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpassword123')
-        self.book = Book.objects.create(title='Test Book', author='Test Author', isbn='9781234567890')
-        self.borrow_record = BorrowRecord.objects.create(user=self.user, book=self.book)
         self.client.login(username='testuser', password='testpassword123')
 
     def test_success(self):
