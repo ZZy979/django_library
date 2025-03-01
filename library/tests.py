@@ -78,12 +78,25 @@ class SearchBookViewTest(TestCase):
             Book.objects.create(title=f'Book {i}', author=f'Author {i}', isbn=str(i))
 
     def test_search_by_title(self):
-        response = self.client.get(reverse('library:book-list'), {'q': 'django'})
+        response = self.client.get(reverse('library:book-list'), {'title': 'django'})
         self.assertEqual(200, response.status_code)
-        self.assertQuerySetEqual(response.context['book_list'], [self.django])
+        values = ['Django for Beginners']
+        self.assertQuerySetEqual(response.context['book_list'], values, transform=lambda b: b.title)
+
+    def test_search_by_category(self):
+        response = self.client.get(reverse('library:book-list'), {'category': 1})
+        self.assertEqual(200, response.status_code)
+        values = ['Django for Beginners', 'Python Crash Course']
+        self.assertQuerySetEqual(response.context['book_list'], values, transform=lambda b: b.title)
+
+    def test_combined_search(self):
+        response = self.client.get(reverse('library:book-list'), {'title': 'book', 'author': '8'})
+        self.assertEqual(200, response.status_code)
+        values = ['Book 8', 'Book 18']
+        self.assertQuerySetEqual(response.context['book_list'], values, transform=lambda b: b.title)
 
     def test_search_no_results(self):
-        response = self.client.get(reverse('library:book-list'), {'q': 'flask'})
+        response = self.client.get(reverse('library:book-list'), {'title': 'flask'})
         self.assertEqual(200, response.status_code)
         self.assertContains(response, 'No results found.')
 
@@ -101,10 +114,10 @@ class SearchBookViewTest(TestCase):
         self.assertEqual(2, response.context['page_obj'].number)
 
     def test_pagination_with_search(self):
-        response = self.client.get(reverse('library:book-list'), {'q': 'Book', 'page': 2})
+        response = self.client.get(reverse('library:book-list'), {'title': 'Book', 'page': 2})
         self.assertEqual(200, response.status_code)
         self.assertEqual(5, len(response.context['book_list']))
-        self.assertIn('q=Book', response.context['querystring'])
+        self.assertIn('title=Book', response.context['querystring'])
 
 
 class BookDetailViewTest(TestCase):

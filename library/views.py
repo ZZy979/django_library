@@ -7,8 +7,9 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic.edit import FormMixin
 
-from .forms import UserRegisterForm
+from .forms import UserRegisterForm, BookSearchForm
 from .models import Book, BorrowRecord
 
 
@@ -41,21 +42,35 @@ def user_logout(request):
     return redirect('library:login')
 
 
-class SearchBookView(ListView):
+class SearchBookView(FormMixin, ListView):
+    form_class = BookSearchForm
+    model = Book
+    ordering = ['pk']
     paginate_by = 20
 
+    def get_form_kwargs(self):
+        return {'data': self.request.GET}
+
     def get_queryset(self):
-        if query := self.request.GET.get('q'):
-            return Book.objects.filter(title__icontains=query)
-        else:
-            return Book.objects.all()
+        form = self.get_form()
+        books = super().get_queryset()
+        if form.is_valid():
+            if title := form.cleaned_data.get('title'):
+                books = books.filter(title__icontains=title)
+            if author := form.cleaned_data.get('author'):
+                books = books.filter(author__icontains=author)
+            if isbn := form.cleaned_data.get('isbn'):
+                books = books.filter(isbn__icontains=isbn)
+            if category := form.cleaned_data.get('category'):
+                books = books.filter(category=category)
+        return books
 
     def get_context_data(self, **kwargs):
         query_params = self.request.GET.copy()
         if 'page' in query_params:
             del query_params['page']
-        querystring = urlencode(query_params)
-        return super().get_context_data(querystring=querystring, **kwargs)
+        kwargs['querystring'] = urlencode(query_params)
+        return super().get_context_data(**kwargs)
 
 
 class BookDetailView(DetailView):
