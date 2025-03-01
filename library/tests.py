@@ -1,11 +1,11 @@
 from urllib.parse import quote
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Book, BorrowRecord
+from .models import User, Book, BorrowRecord
 
 
 class UserRegisterTest(TestCase):

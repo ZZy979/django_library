@@ -10,7 +10,7 @@
     	<nav>
             <a href="{% url 'library:book-list' %}">Home</a> |
             {% if user.is_authenticated %}
-            	<a href="{% url 'library:borrow-records' %}">Your Borrowed Books</a> |
+            	<a href="{% url 'library:borrow-records' %}">Borrowed Books</a> |
                 Welcome {{ user.username }} |
                 <a href="{% url 'library:logout' %}">Logout</a>
             {% else %}

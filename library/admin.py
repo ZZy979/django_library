@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
-from .models import Book, BorrowRecord, Category
+from .models import User, Book, BorrowRecord, Category
 
 
 class BookAdmin(admin.ModelAdmin):
@@ -14,6 +15,7 @@ class BorrowRecordAdmin(admin.ModelAdmin):
     list_filter = ['borrow_date', 'return_date']
 
 
+admin.site.register(User, UserAdmin)
 admin.site.register(Category)
 admin.site.register(Book, BookAdmin)
 admin.site.register(BorrowRecord, BorrowRecordAdmin)
