@@ -1,0 +1,37 @@
+[
+  {
+    "model": "library.category",
+    "pk": 1,
+    "fields": {
+      "name": "Programming"
+    }
+  },
+  {
+    "model": "library.book",
+    "pk": 1,
+    "fields": {
+      "title": "Django for Beginners",
+      "author": "William S. Vincent",
+      "isbn": "9781735467269",
+      "publisher": "WelcomeToCode",
+      "pub_date": "2024-07-10",
+      "quantity": 5,
+      "category": 1,
+      "description": "Django for Beginners is the fifth edition of the leading guide to building real-world web applications with Python."
+    }
+  },
+  {
+    "model": "library.book",
+    "pk": 2,
+    "fields": {
+      "title": "Python Crash Course",
+      "author": "Eric Matthes",
+      "isbn": "9781718502703",
+      "publisher": "No Starch Press",
+      "pub_date": "2023-01-10",
+      "quantity": 3,
+      "category": 1,
+      "description": "Python Crash Course is the world’s best-selling guide to the Python programming language."
+    }
+  }
+]

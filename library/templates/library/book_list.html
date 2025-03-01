@@ -4,7 +4,7 @@
 
 {% block content %}
 <h1>Book List</h1>
-<form action="{% url 'library:search-book' %}" method="get">
+<form action="{% url 'library:book-list' %}" method="get">
     <input type="text" name="q" placeholder="Search books...">
     <button type="submit">Search</button>
 </form>

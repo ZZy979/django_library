@@ -6,7 +6,7 @@
 <h1>{{ book.title }}</h1>
 <p>Author: {{ book.author }}</p>
 <p>Publisher: {{ book.publisher }}</p>
-<p>Publication Date: {{ book.pub_date }}</p>
+<p>Publication Date: {{ book.pub_date|date:"Y-m-d" }}</p>
 <p>Category: {{ book.category.name }}</p>
 <p>ISBN: {{ book.isbn }}</p>
 <p>Quantity: {{ book.quantity }}</p>
@@ -17,5 +17,5 @@
 {% else %}
     (Out of Stock)
 {% endif %}
-| <a href="{% url 'library:search-book' %}">Back to List</a>
+| <a href="{% url 'library:book-list' %}">Back to List</a>
 {% endblock %}

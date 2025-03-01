@@ -3,8 +3,10 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, DetailView
+from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
 from .forms import UserRegisterForm
 from .models import Book, BorrowRecord
@@ -28,7 +30,7 @@ def user_login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('library:search-book')
+            return redirect('library:book-list')
         else:
             messages.error(request, 'Invalid username or password.')
     return render(request, 'library/login.html')
@@ -60,6 +62,26 @@ class BookDetailView(DetailView):
     model = Book
 
 
+class BookCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = 'library.add_book'
+    model = Book
+    fields = '__all__'
+    success_url = reverse_lazy('library:book-list')
+
+
+class BookUpdateView(PermissionRequiredMixin, UpdateView):
+    permission_required = 'library.change_book'
+    model = Book
+    fields = '__all__'
+    success_url = reverse_lazy('library:book-list')
+
+
+class BookDeleteView(PermissionRequiredMixin, DeleteView):
+    permission_required = 'library.delete_book'
+    model = Book
+    success_url = reverse_lazy('library:book-list')
+
+
 @login_required
 def borrow_book(request, book_id):
     book = get_object_or_404(Book, pk=book_id)
@@ -67,7 +89,7 @@ def borrow_book(request, book_id):
         BorrowRecord.objects.create(user=request.user, book=book)
         book.quantity -= 1
         book.save()
-    return redirect('library:search-book')
+    return redirect('library:book-list')
 
 
 @login_required

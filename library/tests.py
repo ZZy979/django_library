@@ -1,13 +1,11 @@
-import datetime
 from urllib.parse import quote
 
-from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import dateformat
 
-from .models import Book, BorrowRecord, Category
+from .models import Book, BorrowRecord
 
 
 class UserRegisterTest(TestCase):
@@ -45,16 +43,23 @@ class UserRegisterTest(TestCase):
         self.assertContains(response, 'Enter a valid username.')
 
 
+def create_test_users():
+    call_command('loadgroupperms')
+    User.objects.create_user(username='testuser', password='testpassword123')
+    admin_user = User.objects.create_user(username='testadmin', password='testpassword456')
+    admin_user.groups.add(Group.objects.get(name='Librarian'))
+
+
 class UserLoginTest(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        User.objects.create_user(username='testuser', password='testpassword123')
+        create_test_users()
 
     def test_success(self):
         data = {'username': 'testuser', 'password': 'testpassword123'}
         response = self.client.post(reverse('library:login'), data)
-        self.assertRedirects(response, reverse('library:search-book'))
+        self.assertRedirects(response, reverse('library:book-list'))
 
     def test_fail(self):
         data = {'username': 'testuser', 'password': 'wrongpassword'}
@@ -64,100 +69,213 @@ class UserLoginTest(TestCase):
 
 
 class SearchBookViewTest(TestCase):
+    fixtures = ['books.json']
 
     @classmethod
     def setUpTestData(cls):
-        cls.django = Book.objects.create(
-            title='Django for Beginners', author='William S. Vincent', isbn='9781234567890')
-        cls.python = Book.objects.create(
-            title='Python Crash Course', author='Eric Matthes', isbn='9789876543210')
+        cls.django = Book.objects.get(title='Django for Beginners')
         for i in range(25):
             Book.objects.create(title=f'Book {i}', author=f'Author {i}', isbn=str(i))
 
     def test_search_by_title(self):
-        response = self.client.get(reverse('library:search-book'), {'q': 'Django'})
+        response = self.client.get(reverse('library:book-list'), {'q': 'django'})
         self.assertEqual(200, response.status_code)
         self.assertQuerySetEqual(response.context['book_list'], [self.django])
 
     def test_search_no_results(self):
-        response = self.client.get(reverse('library:search-book'), {'q': 'Flask'})
+        response = self.client.get(reverse('library:book-list'), {'q': 'flask'})
         self.assertEqual(200, response.status_code)
         self.assertContains(response, 'No results found.')
 
     def test_pagination(self):
-        response = self.client.get(reverse('library:search-book'))
+        response = self.client.get(reverse('library:book-list'))
         self.assertEqual(200, response.status_code)
         self.assertEqual(20, len(response.context['book_list']))
         page_obj = response.context['page_obj']
         self.assertEqual(1, page_obj.number)
         self.assertEqual(2, page_obj.paginator.num_pages)
 
-        response = self.client.get(reverse('library:search-book'), {'page': 2})
+        response = self.client.get(reverse('library:book-list'), {'page': 2})
         self.assertEqual(200, response.status_code)
         self.assertEqual(7, len(response.context['book_list']))
         self.assertEqual(2, response.context['page_obj'].number)
 
     def test_pagination_with_search(self):
-        response = self.client.get(reverse('library:search-book'), {'q': 'Book', 'page': 2})
+        response = self.client.get(reverse('library:book-list'), {'q': 'Book', 'page': 2})
         self.assertEqual(200, response.status_code)
         self.assertEqual(5, len(response.context['book_list']))
         self.assertIn('q=Book', response.context['querystring'])
 
 
 class BookDetailViewTest(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.category = Category.objects.create(name='Programming')
-        cls.book = Book.objects.create(
-            title='Django for Beginners',
-            author='William S. Vincent',
-            isbn='9781234567890',
-            publisher='WelcomeToCode',
-            pub_date=datetime.date(2020, 8, 10),
-            quantity=5,
-            category=cls.category,
-            description='A great book for learning Django.'
-        )
+    fixtures = ['books.json']
 
     def test_book_detail(self):
-        response = self.client.get(reverse('library:book-detail', args=(self.book.id,)))
+        response = self.client.get(reverse('library:book-detail', args=(1,)))
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, self.book.title)
-        self.assertContains(response, self.book.author)
-        self.assertContains(response, self.book.isbn)
-        self.assertContains(response, self.book.publisher)
-        self.assertContains(response, dateformat.format(self.book.pub_date, settings.DATE_FORMAT))
-        self.assertContains(response, self.category.name)
-        self.assertContains(response, self.book.description)
+        self.assertContains(response, 'Django for Beginners')
+        self.assertContains(response, 'William S. Vincent')
+        self.assertContains(response, '9781735467269')
+        self.assertContains(response, 'WelcomeToCode')
+        self.assertContains(response, '2024-07-10')
+        self.assertContains(response, 'Programming')
+        self.assertContains(response, 'Django for Beginners is the fifth edition of the leading guide to '
+                                      'building real-world web applications with Python.')
 
     def test_not_found(self):
         response = self.client.get(reverse('library:book-detail', args=(9999,)))
         self.assertEqual(404, response.status_code)
 
 
-class BorrowBookViewTest(TestCase):
+class BookCreateViewTest(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user(username='testuser', password='testpassword123')
-        cls.book = Book.objects.create(title='Test Book', author='Test Author', isbn='9781234567890', quantity=2)
+        create_test_users()
+
+    def setUp(self):
+        self.client.login(username='testadmin', password='testpassword456')
+
+    def test_get(self):
+        response = self.client.get(reverse('library:add-book'))
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, 'library/book_form.html')
+
+    def test_post(self):
+        data = {'title': 'Test Book', 'author': 'Test Author', 'isbn': '9781234567890', 'quantity': 1}
+        response = self.client.post(reverse('library:add-book'), data)
+        self.assertRedirects(response, reverse('library:book-list'))
+        self.assertTrue(Book.objects.filter(title='Test Book').exists())
+
+    def test_unauthenticated(self):
+        self.client.logout()
+        url = reverse('library:add-book')
+        response = self.client.post(url)
+        self.assertRedirects(response, reverse('library:login') + '?next=' + quote(url))
+
+    def test_unauthorized(self):
+        self.client.login(username='testuser', password='testpassword123')
+        url = reverse('library:add-book')
+        response = self.client.get(url)
+        self.assertEqual(403, response.status_code)
+        response = self.client.post(url)
+        self.assertEqual(403, response.status_code)
+
+
+class BookUpdateViewTest(TestCase):
+    fixtures = ['books.json']
+
+    @classmethod
+    def setUpTestData(cls):
+        create_test_users()
+
+    def setUp(self):
+        self.client.login(username='testadmin', password='testpassword456')
+
+    def test_get(self):
+        response = self.client.get(reverse('library:edit-book', args=(1,)))
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, 'library/book_form.html')
+        self.assertContains(response, 'Django for Beginners')
+
+    def test_post(self):
+        data = {
+            'title': 'Django for Beginners (5th Edition)',
+            'author': 'William S. Vincent',
+            'isbn': '9781735467269',
+            'quantity': 10
+        }
+        response = self.client.post(reverse('library:edit-book', args=(1,)), data)
+        self.assertRedirects(response, reverse('library:book-list'))
+        book = Book.objects.get(pk=1)
+        self.assertEqual(data['title'], book.title)
+        self.assertEqual(data['quantity'], book.quantity)
+
+    def test_not_found(self):
+        response = self.client.get(reverse('library:edit-book', args=(9999,)))
+        self.assertEqual(404, response.status_code)
+
+    def test_unauthenticated(self):
+        self.client.logout()
+        url = reverse('library:edit-book', args=(1,))
+        response = self.client.post(url)
+        self.assertRedirects(response, reverse('library:login') + '?next=' + quote(url))
+
+    def test_unauthorized(self):
+        self.client.login(username='testuser', password='testpassword123')
+        url = reverse('library:edit-book', args=(1,))
+        response = self.client.get(url)
+        self.assertEqual(403, response.status_code)
+        response = self.client.post(url)
+        self.assertEqual(403, response.status_code)
+
+
+class BookDeleteViewTest(TestCase):
+    fixtures = ['books.json']
+
+    @classmethod
+    def setUpTestData(cls):
+        create_test_users()
+
+    def setUp(self):
+        self.client.login(username='testadmin', password='testpassword456')
+
+    def test_get(self):
+        response = self.client.get(reverse('library:delete-book', args=(2,)))
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, 'library/book_confirm_delete.html')
+        self.assertContains(response, 'Are you sure you want to delete "Python Crash Course"?')
+
+    def test_post(self):
+        response = self.client.post(reverse('library:delete-book', args=(2,)))
+        self.assertRedirects(response, reverse('library:book-list'))
+        self.assertFalse(Book.objects.filter(pk=2).exists())
+
+    def test_not_found(self):
+        response = self.client.get(reverse('library:delete-book', args=(9999,)))
+        self.assertEqual(404, response.status_code)
+
+    def test_unauthenticated(self):
+        self.client.logout()
+        url = reverse('library:delete-book', args=(2,))
+        response = self.client.post(url)
+        self.assertRedirects(response, reverse('library:login') + '?next=' + quote(url))
+
+    def test_unauthorized(self):
+        self.client.login(username='testuser', password='testpassword123')
+        url = reverse('library:delete-book', args=(2,))
+        response = self.client.get(url)
+        self.assertEqual(403, response.status_code)
+        response = self.client.post(url)
+        self.assertEqual(403, response.status_code)
+
+
+class BorrowBookViewTest(TestCase):
+    fixtures = ['books.json']
+
+    @classmethod
+    def setUpTestData(cls):
+        create_test_users()
+        cls.user = User.objects.get(username='testuser')
+        cls.book = Book.objects.get(pk=1)
 
     def setUp(self):
         self.client.login(username='testuser', password='testpassword123')
 
     def test_success(self):
         response = self.client.post(reverse('library:borrow-book', args=(self.book.id,)))
-        self.assertRedirects(response, reverse('library:search-book'))
-        self.assertEqual(1, Book.objects.get(id=self.book.id).quantity)
+        self.assertRedirects(response, reverse('library:book-list'))
+        self.book.refresh_from_db()
+        self.assertEqual(4, self.book.quantity)
         self.assertTrue(BorrowRecord.objects.filter(user=self.user, book=self.book).exists())
 
     def test_fail(self):
         self.book.quantity = 0
         self.book.save()
         response = self.client.post(reverse('library:borrow-book', args=(self.book.id,)))
-        self.assertRedirects(response, reverse('library:search-book'))
-        self.assertEqual(0, Book.objects.get(id=self.book.id).quantity)
+        self.assertRedirects(response, reverse('library:book-list'))
+        self.book.refresh_from_db()
+        self.assertEqual(0, self.book.quantity)
         self.assertFalse(BorrowRecord.objects.filter(user=self.user, book=self.book).exists())
 
     def test_unauthenticated(self):
@@ -167,13 +285,13 @@ class BorrowBookViewTest(TestCase):
         self.assertRedirects(response, reverse('library:login') + '?next=' + quote(borrow_url))
 
 
-class ReturnBookViewTest(TestCase):
+class BorrowRecordAndReturnBookViewTest(TestCase):
+    fixtures = ['books.json']
 
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user(username='testuser', password='testpassword123')
-        cls.book = Book.objects.create(title='Test Book', author='Test Author', isbn='9781234567890')
-        cls.borrow_record = BorrowRecord.objects.create(user=cls.user, book=cls.book)
+        create_test_users()
+        cls.borrow_record = BorrowRecord.objects.create(user_id=1, book_id=1)
 
     def setUp(self):
         self.client.login(username='testuser', password='testpassword123')
@@ -187,7 +305,7 @@ class ReturnBookViewTest(TestCase):
         self.assertRedirects(response, reverse('library:borrow-records'))
         self.borrow_record.refresh_from_db()
         self.assertIsNotNone(self.borrow_record.return_date)
-        self.assertEqual(2, Book.objects.get(id=self.book.id).quantity)
+        self.assertEqual(6, Book.objects.get(pk=1).quantity)
 
     def test_unauthenticated(self):
         self.client.logout()
