@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import ForeignKey
@@ -32,13 +34,25 @@ class Book(models.Model):
 class BorrowRecord(models.Model):
     user = ForeignKey(User, on_delete=models.CASCADE)
     book = ForeignKey(Book, on_delete=models.CASCADE)
-    borrow_date = models.DateTimeField(auto_now_add=True)
-    return_date = models.DateTimeField(null=True, blank=True)
+    borrow_date = models.DateField(auto_now_add=True)
+    due_date = models.DateField()
+    return_date = models.DateField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.due_date:
+            self.due_date = timezone.now().date() + datetime.timedelta(days=14)
+        super().save(*args, **kwargs)
+
+    def renew(self):
+        if self.return_date is not None:
+            return
+        self.due_date += datetime.timedelta(days=14)
+        self.save()
 
     def return_book(self):
         if self.return_date is not None:
             return
-        self.return_date = timezone.now()
+        self.return_date = timezone.now().date()
         self.book.quantity += 1
         self.book.save()
         self.save()

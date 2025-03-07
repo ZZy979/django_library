@@ -108,6 +108,13 @@ def borrow_book(request, book_id):
 
 
 @login_required
+def renew_book(request, record_id):
+    record = get_object_or_404(BorrowRecord, pk=record_id, user=request.user)
+    record.renew()
+    return redirect('library:borrow-records')
+
+
+@login_required
 def return_book(request, record_id):
     record = get_object_or_404(BorrowRecord, pk=record_id, user=request.user)
     record.return_book()

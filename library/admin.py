@@ -11,8 +11,8 @@ class BookAdmin(admin.ModelAdmin):
 
 
 class BorrowRecordAdmin(admin.ModelAdmin):
-    list_display = ['user', 'book', 'borrow_date', 'return_date']
-    list_filter = ['borrow_date', 'return_date']
+    list_display = ['user', 'book', 'borrow_date', 'due_date', 'return_date']
+    list_filter = ['borrow_date', 'due_date', 'return_date']
 
 
 admin.site.register(User, UserAdmin)

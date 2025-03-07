@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import User, Book, BorrowRecord
 
@@ -281,6 +282,8 @@ class BorrowBookViewTest(TestCase):
         self.book.refresh_from_db()
         self.assertEqual(4, self.book.quantity)
         self.assertTrue(BorrowRecord.objects.filter(user=self.user, book=self.book).exists())
+        borrow_record = BorrowRecord.objects.get(user=self.user, book=self.book)
+        self.assertEqual(14, (borrow_record.due_date - timezone.now().date()).days)
 
     def test_fail(self):
         self.book.quantity = 0
@@ -298,7 +301,7 @@ class BorrowBookViewTest(TestCase):
         self.assertRedirects(response, reverse('library:login') + '?next=' + quote(borrow_url))
 
 
-class BorrowRecordAndReturnBookViewTest(TestCase):
+class BorrowRecordViewTest(TestCase):
     fixtures = ['books.json']
 
     @classmethod
@@ -309,15 +312,23 @@ class BorrowRecordAndReturnBookViewTest(TestCase):
     def setUp(self):
         self.client.login(username='testuser', password='testpassword123')
 
-    def test_success(self):
+    def test_borrow_record_list(self):
         response = self.client.get(reverse('library:borrow-records'))
         self.assertEqual(200, response.status_code)
         self.assertQuerySetEqual(response.context['borrow_record_list'], [self.borrow_record])
 
+    def test_renew_book(self):
+        original_due_date = self.borrow_record.due_date
+        response = self.client.post(reverse('library:renew-book', args=(self.borrow_record.id,)))
+        self.assertRedirects(response, reverse('library:borrow-records'))
+        self.borrow_record.refresh_from_db()
+        self.assertEqual(14, (self.borrow_record.due_date - original_due_date).days)
+
+    def test_return_book(self):
         response = self.client.post(reverse('library:return-book', args=(self.borrow_record.id,)))
         self.assertRedirects(response, reverse('library:borrow-records'))
         self.borrow_record.refresh_from_db()
-        self.assertIsNotNone(self.borrow_record.return_date)
+        self.assertEqual(timezone.now().date(), self.borrow_record.return_date)
         self.assertEqual(6, Book.objects.get(pk=1).quantity)
 
     def test_unauthenticated(self):
@@ -325,6 +336,13 @@ class BorrowRecordAndReturnBookViewTest(TestCase):
         borrow_records_url = reverse('library:borrow-records')
         response = self.client.get(borrow_records_url)
         self.assertRedirects(response, reverse('library:login') + '?next=' + quote(borrow_records_url))
+
+        original_due_date = self.borrow_record.due_date
+        renew_url = reverse('library:renew-book', args=(self.borrow_record.id,))
+        response = self.client.post(renew_url)
+        self.assertRedirects(response, reverse('library:login') + '?next=' + quote(renew_url))
+        self.borrow_record.refresh_from_db()
+        self.assertEqual(original_due_date, self.borrow_record.due_date)
 
         return_url = reverse('library:return-book', args=(self.borrow_record.id,))
         response = self.client.post(return_url)

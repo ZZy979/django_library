@@ -7,11 +7,13 @@
 <ul>
 {% for record in borrow_record_list %}
 	<li>
-        {{ record.book.title }} by {{ record.book.author }} (Borrowed on {{ record.borrow_date|date:"Y-m-d H:i:s" }})
+        {{ record.book.title }} by {{ record.book.author }}
+        (Borrowed on {{ record.borrow_date|date:"Y-m-d" }}, Due on {{ record.due_date|date:"Y-m-d" }})
         {% if not record.return_date %}
         	<a href="{% url 'library:return-book' record.id %}">Return</a>
+            <a href="{% url 'library:renew-book' record.id %}">Renew</a>
         {% else %}
-            (Returned on {{ record.return_date|date:"Y-m-d H:i:s" }})
+            (Returned on {{ record.return_date|date:"Y-m-d" }})
         {% endif %}
     </li>
 {% empty %}

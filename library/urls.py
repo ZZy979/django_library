@@ -12,6 +12,7 @@ urlpatterns = [
     path('book/<int:pk>/edit/', views.BookUpdateView.as_view(), name='edit-book'),
     path('book/<int:pk>/delete/', views.BookDeleteView.as_view(), name='delete-book'),
     path('borrow/<int:book_id>/', views.borrow_book, name='borrow-book'),
+    path('renew/<int:record_id>/', views.renew_book, name='renew-book'),
     path('return/<int:record_id>/', views.return_book, name='return-book'),
     path('borrow-records/', views.borrow_records, name='borrow-records'),
 ]
