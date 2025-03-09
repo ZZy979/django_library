@@ -47,7 +47,8 @@ class UserRegisterTest(TestCase):
 def create_test_users():
     call_command('loadgroupperms')
     User.objects.create_user(username='testuser', password='testpassword123')
-    admin_user = User.objects.create_user(username='testadmin', password='testpassword456')
+    User.objects.create_user(username='testuser2', password='testpassword456')
+    admin_user = User.objects.create_user(username='testadmin', password='testpassword789')
     admin_user.groups.add(Group.objects.get(name='Librarian'))
 
 
@@ -184,7 +185,7 @@ class BookCreateViewTest(TestCase):
         create_test_users()
 
     def setUp(self):
-        self.client.login(username='testadmin', password='testpassword456')
+        self.client.login(username='testadmin', password='testpassword789')
 
     def test_get(self):
         response = self.client.get(reverse('library:add-book'))
@@ -220,7 +221,7 @@ class BookUpdateViewTest(TestCase):
         create_test_users()
 
     def setUp(self):
-        self.client.login(username='testadmin', password='testpassword456')
+        self.client.login(username='testadmin', password='testpassword789')
 
     def test_get(self):
         response = self.client.get(reverse('library:edit-book', args=(1,)))
@@ -268,7 +269,7 @@ class BookDeleteViewTest(TestCase):
         create_test_users()
 
     def setUp(self):
-        self.client.login(username='testadmin', password='testpassword456')
+        self.client.login(username='testadmin', password='testpassword789')
 
     def test_get(self):
         response = self.client.get(reverse('library:delete-book', args=(2,)))
@@ -385,3 +386,46 @@ class BorrowRecordViewTest(TestCase):
         self.assertRedirects(response, reverse('library:login') + '?next=' + quote(return_url))
         self.borrow_record.refresh_from_db()
         self.assertIsNone(self.borrow_record.return_date)
+
+
+class AdminBorrowRecordListViewTest(TestCase):
+    fixtures = ['books.json']
+
+    @classmethod
+    def setUpTestData(cls):
+        create_test_users()
+        cls.user1_django = BorrowRecord.objects.create(user_id=1, book_id=1)
+        cls.user1_python = BorrowRecord.objects.create(user_id=1, book_id=2)
+        cls.user2_django = BorrowRecord.objects.create(user_id=2, book_id=1)
+
+    def setUp(self):
+        self.client.login(username='testadmin', password='testpassword789')
+
+    def test_all_borrow_records(self):
+        response = self.client.get(reverse('library:admin-borrow-records'))
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, 'library/admin_borrow_record_list.html')
+        values = [self.user1_django, self.user1_python, self.user2_django]
+        self.assertQuerySetEqual(response.context['borrow_record_list'], values, ordered=False)
+
+    def test_search_by_username(self):
+        response = self.client.get(reverse('library:admin-borrow-records'), {'username': 'testuser'})
+        values = [self.user1_django, self.user1_python]
+        self.assertQuerySetEqual(response.context['borrow_record_list'], values, ordered=False)
+
+    def test_search_by_isbn(self):
+        response = self.client.get(reverse('library:admin-borrow-records'), {'isbn': '9781735467269'})
+        values = [self.user1_django, self.user2_django]
+        self.assertQuerySetEqual(response.context['borrow_record_list'], values, ordered=False)
+
+    def test_unauthenticated(self):
+        self.client.logout()
+        url = reverse('library:admin-borrow-records')
+        response = self.client.get(url)
+        self.assertRedirects(response, reverse('library:login') + '?next=' + quote(url))
+
+    def test_unauthorized(self):
+        self.client.login(username='testuser', password='testpassword123')
+        url = reverse('library:admin-borrow-records')
+        response = self.client.get(url)
+        self.assertEqual(403, response.status_code)

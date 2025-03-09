@@ -15,6 +15,7 @@
 {% if user.is_admin %}
     <a href="{% url 'library:edit-book' book.id %}">Edit</a> |
     <a href="{% url 'library:delete-book' book.id %}">Delete</a> |
+    <a href="{% url 'library:admin-borrow-records' %}?isbn={{ book.isbn }}">Borrow Records</a> |
 {% else %}
     {% if book.quantity > 0 %}
         <a href="{% url 'library:borrow-book' book.id %}">Borrow</a> |

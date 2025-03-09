@@ -13,7 +13,8 @@ class Command(BaseCommand):
         # add permissions
         perm_names = [
             'add_book', 'change_book', 'delete_book', 'view_book',
-            'add_category', 'change_category', 'delete_category', 'view_category'
+            'add_category', 'change_category', 'delete_category', 'view_category',
+            'view_borrowrecord'
         ]
         librarian_perms = Permission.objects.filter(codename__in=perm_names)
         librarian_group.permissions.set(librarian_perms)

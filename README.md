@@ -26,6 +26,7 @@
   * 用户可以通过系统归还图书。
 * 借阅记录查询
   * 用户可以查看自己的借阅记录。
+  * 管理员可以查看所有用户的借阅记录。
 
 ## 依赖
 * Python 3.11
@@ -36,6 +37,12 @@
 
 ```shell
 python manage.py migrate
+```
+
+加载用户组和权限数据
+
+```shell
+python manage.py loadgroupperms
 ```
 
 启动服务器

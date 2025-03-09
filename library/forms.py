@@ -25,3 +25,8 @@ class BookSearchForm(forms.Form):
     author = forms.CharField(max_length=100, required=False)
     isbn = forms.CharField(max_length=13, required=False)
     category = forms.ModelChoiceField(queryset=Category.objects.all(), required=False)
+
+
+class BorrowRecordSearchForm(forms.Form):
+    username = forms.CharField(max_length=150, required=False)
+    isbn = forms.CharField(max_length=13, required=False)

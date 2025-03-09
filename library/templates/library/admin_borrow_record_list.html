@@ -1,0 +1,30 @@
+{% extends 'library/base.html' %}
+
+{% block title %}Borrow Records{% endblock %}
+
+{% block content %}
+<h1>Borrow Records</h1>
+<form action="{% url 'library:admin-borrow-records' %}" method="get">
+    {{ form }}
+    <button type="submit">Search</button>
+</form>
+
+<table>
+<tr>
+    <th>User</th>
+    <th>Book</th>
+    <th>Borrow date</th>
+    <th>Due date</th>
+    <th>Return date</th>
+</tr>
+{% for record in borrow_record_list %}
+<tr>
+    <td>{{ record.user.username }}</td>
+    <td>{{ record.book.title }}</td>
+    <td>{{ record.borrow_date|date:"Y-m-d" }}</td>
+    <td>{{ record.due_date|date:"Y-m-d" }}</td>
+    <td>{{ record.return_date|date:"Y-m-d" }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

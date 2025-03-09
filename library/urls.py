@@ -16,4 +16,5 @@ urlpatterns = [
     path('renew/<int:record_id>/', views.renew_book, name='renew-book'),
     path('return/<int:record_id>/', views.return_book, name='return-book'),
     path('borrow-records/', views.borrow_records, name='borrow-records'),
+    path('admin-borrow-records/', views.AdminBorrowRecordListView.as_view(), name='admin-borrow-records'),
 ]

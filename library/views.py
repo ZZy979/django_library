@@ -9,7 +9,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.views.generic.edit import FormMixin
 
-from .forms import UserRegisterForm, BookSearchForm, UserProfileForm
+from .forms import UserRegisterForm, BookSearchForm, UserProfileForm, BorrowRecordSearchForm
 from .models import Book, BorrowRecord
 
 
@@ -134,3 +134,25 @@ def return_book(request, record_id):
 def borrow_records(request):
     borrow_record_list = BorrowRecord.objects.filter(user=request.user).order_by('-borrow_date')
     return render(request, 'library/borrow_record_list.html', {'borrow_record_list': borrow_record_list})
+
+
+class AdminBorrowRecordListView(PermissionRequiredMixin, FormMixin, ListView):
+    permission_required = 'library.view_borrowrecord'
+    form_class = BorrowRecordSearchForm
+    model = BorrowRecord
+    ordering = ['-borrow_date']
+    context_object_name = 'borrow_record_list'
+    template_name = 'library/admin_borrow_record_list.html'
+
+    def get_form_kwargs(self):
+        return {'data': self.request.GET}
+
+    def get_queryset(self):
+        form = self.get_form()
+        records = super().get_queryset()
+        if form.is_valid():
+            if username := form.cleaned_data.get('username'):
+                records = records.filter(user__username=username)
+            if isbn := form.cleaned_data.get('isbn'):
+                records = records.filter(book__isbn=isbn)
+        return records
