@@ -3,13 +3,13 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.views.generic.edit import FormMixin
 
-from .forms import UserRegisterForm, BookSearchForm
+from .forms import UserRegisterForm, BookSearchForm, UserProfileForm
 from .models import Book, BorrowRecord
 
 
@@ -40,6 +40,15 @@ def user_login(request):
 def user_logout(request):
     logout(request)
     return redirect('library:login')
+
+
+class UserProfileView(LoginRequiredMixin, UpdateView):
+    form_class = UserProfileForm
+    template_name = 'library/user_profile.html'
+    success_url = reverse_lazy('library:book-list')
+
+    def get_object(self, queryset=None):
+        return self.request.user
 
 
 class SearchBookView(FormMixin, ListView):

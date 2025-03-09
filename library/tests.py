@@ -69,6 +69,42 @@ class UserLoginTest(TestCase):
         self.assertContains(response, 'Invalid username or password.')
 
 
+class UserProfileTest(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        create_test_users()
+
+    def setUp(self):
+        self.client.login(username='testuser', password='testpassword123')
+
+    def test_get(self):
+        response = self.client.get(reverse('library:profile'))
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, 'library/user_profile.html')
+
+    def test_success(self):
+        data = {'first_name': 'Alice', 'last_name': 'Smith', 'email': 'alice@example.com'}
+        response = self.client.post(reverse('library:profile'), data)
+        self.assertRedirects(response, reverse('library:book-list'))
+        user = User.objects.get(username='testuser')
+        self.assertEqual('Alice', user.first_name)
+        self.assertEqual('Smith', user.last_name)
+        self.assertEqual('alice@example.com', user.email)
+
+    def test_invalid_email(self):
+        data = {'first_name': 'Alice', 'last_name': 'Smith', 'email': 'invalid_email'}
+        response = self.client.post(reverse('library:profile'), data)
+        self.assertTemplateUsed(response, 'library/user_profile.html')
+        self.assertContains(response, 'Enter a valid email address.')
+
+    def test_unauthenticated(self):
+        self.client.logout()
+        url = reverse('library:profile')
+        response = self.client.post(url)
+        self.assertRedirects(response, reverse('library:login') + '?next=' + quote(url))
+
+
 class SearchBookViewTest(TestCase):
     fixtures = ['books.json']
 
