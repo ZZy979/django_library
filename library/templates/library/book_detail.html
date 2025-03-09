@@ -12,10 +12,15 @@
 <p>Quantity: {{ book.quantity }}</p>
 <p>Description: {{ book.description }}</p>
 
-{% if book.quantity > 0 %}
-    <a href="{% url 'library:borrow-book' book.id %}">Borrow</a>
+{% if user.is_admin %}
+    <a href="{% url 'library:edit-book' book.id %}">Edit</a> |
+    <a href="{% url 'library:delete-book' book.id %}">Delete</a> |
 {% else %}
-    (Out of Stock)
+    {% if book.quantity > 0 %}
+        <a href="{% url 'library:borrow-book' book.id %}">Borrow</a> |
+    {% else %}
+        (Out of Stock) |
+    {% endif %}
 {% endif %}
-| <a href="{% url 'library:book-list' %}">Back to List</a>
+<a href="{% url 'library:book-list' %}">Back to List</a>
 {% endblock %}

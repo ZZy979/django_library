@@ -5,23 +5,46 @@
 {% block content %}
 <h1>Book List</h1>
 <form action="{% url 'library:book-list' %}" method="get">
-    {{ form.as_p }}
+    {{ form }}
     <button type="submit">Search</button>
 </form>
-<ul>
-{% for book in book_list %}
-    <li>
-        <a href="{% url 'library:book-detail' book.id %}">{{ book.title }}</a> by {{ book.author }} (Quantity: {{ book.quantity }})
-        {% if book.quantity > 0 %}
-            <a href="{% url 'library:borrow-book' book.id %}">Borrow</a>
-        {% else %}
-            (Out of Stock)
-        {% endif %}
-    </li>
-{% empty %}
+{% if user.is_admin %}
+    <a href="{% url 'library:add-book' %}">Add Book</a>
+{% endif %}
+
+{% if book_list %}
+	<table>
+    <tr>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Publisher</th>
+        <th>Quantity</th>
+        <th>Operations</th>
+    </tr>
+    {% for book in book_list %}
+    <tr>
+        <td><a href="{% url 'library:book-detail' book.id %}">{{ book.title }}</a></td>
+        <td>{{ book.author }}</td>
+        <td>{{ book.publisher }}</td>
+        <td>{{ book.quantity }}</td>
+        <td>
+            {% if user.is_admin %}
+            	<a href="{% url 'library:edit-book' book.id %}">Edit</a>
+                <a href="{% url 'library:delete-book' book.id %}">Delete</a>
+            {% else %}
+                {% if book.quantity > 0 %}
+                    <a href="{% url 'library:borrow-book' book.id %}">Borrow</a>
+                {% else %}
+                    (Out of Stock)
+                {% endif %}
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+    </table>
+{% else %}
     <p>No results found.</p>
-{% endfor %}
-</ul>
+{% endif %}
 
 <div class="pagination">
     <span class="step-links">

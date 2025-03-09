@@ -7,7 +7,8 @@ from django.utils import timezone
 
 
 class User(AbstractUser):
-    pass
+    def is_admin(self):
+        return self.groups.filter(name='Librarian').exists()
 
 
 class Category(models.Model):
